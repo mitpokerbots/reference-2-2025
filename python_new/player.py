@@ -42,10 +42,22 @@ class Player(Bot):
         #my_bankroll = game_state.bankroll  # the total number of chips you've gained or lost from the beginning of the game to the start of this round
         #game_clock = game_state.game_clock  # the total number of seconds your bot has left to play this game
         #round_num = game_state.round_num  # the round number from 1 to NUM_ROUNDS
-        #my_cards = round_state.hands[active]  # your cards
+        my_cards = round_state.hands[active]  # your cards
         #big_blind = bool(active)  # True if you are the big blind
         #my_bounty = round_state.bounties[active]  # your current bounty rank
         pass
+
+        self.strong_hole = False
+        card1 = my_cards[0] # '9s', 'Ad', 'Th'
+        card2 = my_cards[1] 
+
+        rank1 = card1[0]
+        suit1 = card1[1]
+        rank2 = card2[0]
+        suit2 = card2[1]
+
+        if rank1 == rank2 or ((rank1 in "AKQJ") and (rank2 in "AKQJ")):
+            self.strong_hole = True
 
     def handle_round_over(self, game_state, terminal_state, active):
         '''
@@ -108,6 +120,20 @@ class Player(Bot):
            min_raise, max_raise = round_state.raise_bounds()  # the smallest and largest numbers of chips for a legal bet/raise
            min_cost = min_raise - my_pip  # the cost of a minimum bet/raise
            max_cost = max_raise - my_pip  # the cost of a maximum bet/raise
+
+        if RaiseAction in legal_actions and self.strong_hole is True:
+
+            for card in my_cards + board_cards:
+                if card[0] == my_bounty:
+                    return RaiseAction(max_raise)
+
+            raise_prob = 0.8
+            raise_amt = int(min_raise + (max_raise - min_raise) * 0.1)
+
+            if random.random() < raise_prob:
+                return RaiseAction(raise_amt)
+
+
         if RaiseAction in legal_actions:
             if random.random() < 0.5:
                 return RaiseAction(min_raise)
